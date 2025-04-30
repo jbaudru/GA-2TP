@@ -175,7 +175,7 @@ if __name__ == "__main__":
                         default="ga", help="Mode to run")
     parser.add_argument("-s", "--size", type=int, default=100, help="Graph size")
     parser.add_argument("-p", "--population", type=int, default=20, help="Population size")
-    parser.add_argument("-g", "--generations", type=int, default=250, help="Number of generations")
+    parser.add_argument("-g", "--generations", type=int, default=500, help="Number of generations")
     parser.add_argument("-i", "--instances", type=int, default=10, help="Number of benchmark instances")
     parser.add_argument("-f", "--file", type=str, default="MON.json", help="Road network file")
     parser.add_argument("--seed", type=int, default=66, help="Random seed for reproducibility")
