@@ -1,6 +1,5 @@
 import random
 import time
-from tqdm import tqdm
 import numpy as np
 
 class GeneticAlgorithm:
@@ -135,10 +134,10 @@ class GeneticAlgorithm:
         
         final_solution = self.byte_to_number(best_solution)
         if verbose:
-            print("\nFinal Solution:")
+            print("Final Solution:")
             print(f"Meeting point: {final_solution[0]}")
             print(f"Dropping point: {final_solution[1]}")
-            print(f"Final fitness: {best_fitness:.4f}")
+            print(f"Final fitness: {best_fitness:.4f} \n\n")
         
         return {
             'solution': final_solution,

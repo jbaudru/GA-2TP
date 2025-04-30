@@ -1,6 +1,8 @@
 import argparse
 import time
 import matplotlib.pyplot as plt
+import random
+import numpy as np
 
 from models.graph import TransportationGraph
 from algorithms.genetic_algorithm import GeneticAlgorithm
@@ -8,32 +10,87 @@ from algorithms.exact_algorithm import ExactAlgorithm
 from utils.visualization import plot_fitness_progress, plot_algorithm_comparison
 from evaluation.benchmarking import Benchmarker
 
-def run_ga_experiment(graph_size=100, pop_size=20, steps=500):
-    """Run a basic GA experiment"""
-    # Create graph
-    graph = TransportationGraph(graph_size)
-    
-    # Generate random terminals
-    terminals = graph.generate_random_terminals()
-    agent1_start, agent2_start, agent1_dest, agent2_dest = terminals
-    
-    print(f"Graph generated with {graph.N} nodes")
-    print(f"Agent 1: start={agent1_start}, destination={agent1_dest}")
-    print(f"Agent 2: start={agent2_start}, destination={agent2_dest}")
-    
-    # Run GA
-    ga = GeneticAlgorithm(graph, pop_size=pop_size)
-    ga.set_terminals(*terminals)
-    
-    result = ga.run(steps=steps)
-    
-    # Plot results
-    plot_fitness_progress(result['fitness_history'], pop_size, steps)
-    
-    return result
+def set_seed(seed):
+    """Set random seeds for reproducibility"""
+    random.seed(seed)
+    np.random.seed(seed)
 
-def benchmark_algorithms(num_instances=10, graph_size=50):
+def run_ga_experiment(graph_size=100, pop_size=20, steps=500, seed=None, num_experiments=50):
+    """Run multiple GA experiments and return average results"""
+    # Set seed if provided
+    if seed is not None:
+        set_seed(seed)
+        
+    all_fitness_history = []
+    all_total_distances = []
+    all_execution_times = []
+    
+    print(f"Running {num_experiments} experiments with graph size {graph_size}, population {pop_size}, steps {steps}")
+    
+    for exp_idx in range(num_experiments):
+        # Create graph
+        graph = TransportationGraph(graph_size)
+        
+        # Generate random terminals
+        terminals = graph.generate_random_terminals()
+        agent1_start, agent2_start, agent1_dest, agent2_dest = terminals
+        
+        # Run GA
+        ga = GeneticAlgorithm(graph, pop_size=pop_size)
+        ga.set_terminals(*terminals)
+        
+        start_time = time.time()
+        result = ga.run(steps=steps)
+        execution_time = time.time() - start_time
+        
+        all_fitness_history.append(result['fitness_history'])
+        all_total_distances.append(result['total_distance'])
+        all_execution_times.append(execution_time)
+        
+        # Print progress
+        if (exp_idx + 1) % 10 == 0:
+            print(f"Completed {exp_idx + 1}/{num_experiments} experiments")
+    
+    # Calculate average fitness history
+    # Find minimum length across all histories
+    min_len = min(len(history) for history in all_fitness_history)
+    
+    # Create a consolidated fitness history where each generation has all experiments' data
+    consolidated_fitness_history = []
+    for gen_idx in range(min_len):
+        # Flatten all population fitness values for this generation across all experiments
+        gen_fitness = []
+        for exp_idx in range(num_experiments):
+            gen_fitness.extend(all_fitness_history[exp_idx][gen_idx])
+        consolidated_fitness_history.append(gen_fitness)
+    
+    # Calculate average total distance
+    avg_total_distance = np.mean(all_total_distances)
+    std_total_distance = np.std(all_total_distances)
+    avg_execution_time = np.mean(all_execution_times)
+    
+    print(f"\nResults averaged over {num_experiments} experiments:")
+    print(f"Average total distance: {avg_total_distance:.2f} ± {std_total_distance:.2f}")
+    print(f"Average execution time: {avg_execution_time:.3f}s")
+    
+    # Plot average results
+    plot_fitness_progress(consolidated_fitness_history, pop_size, steps)
+    
+    # Return aggregated results
+    return {
+        'fitness_history': consolidated_fitness_history,
+        'total_distance': avg_total_distance,
+        'std_total_distance': std_total_distance,
+        'execution_time': avg_execution_time,
+        'all_distances': all_total_distances
+    }
+
+def benchmark_algorithms(num_instances=10, graph_size=50, seed=None):
     """Benchmark GA vs exact algorithm"""
+    # Set seed if provided
+    if seed is not None:
+        set_seed(seed)
+        
     benchmarker = Benchmarker(
         TransportationGraph,
         GeneticAlgorithm,
@@ -50,8 +107,12 @@ def benchmark_algorithms(num_instances=10, graph_size=50):
     # Plot comparison
     plot_algorithm_comparison(ga_results, exact_results, graph_size, num_instances)
 
-def time_budget_comparison(num_instances=10, graph_size=50):
+def time_budget_comparison(num_instances=10, graph_size=50, seed=None):
     """Compare algorithms with equal time budgets"""
+    # Set seed if provided
+    if seed is not None:
+        set_seed(seed)
+        
     benchmarker = Benchmarker(
         TransportationGraph,
         GeneticAlgorithm,
@@ -68,8 +129,12 @@ def time_budget_comparison(num_instances=10, graph_size=50):
     # Plot comparison
     plot_algorithm_comparison(ga_results, exact_results, graph_size, num_instances)
 
-def road_network_experiment(filename):
+def road_network_experiment(filename, seed=None):
     """Run experiment on real road network"""
+    # Set seed if provided
+    if seed is not None:
+        set_seed(seed)
+        
     import os
     filepath = os.path.join("data", "benchmark", filename)
     
@@ -110,17 +175,18 @@ if __name__ == "__main__":
                         default="ga", help="Mode to run")
     parser.add_argument("-s", "--size", type=int, default=100, help="Graph size")
     parser.add_argument("-p", "--population", type=int, default=20, help="Population size")
-    parser.add_argument("-g", "--generations", type=int, default=500, help="Number of generations")
+    parser.add_argument("-g", "--generations", type=int, default=250, help="Number of generations")
     parser.add_argument("-i", "--instances", type=int, default=10, help="Number of benchmark instances")
     parser.add_argument("-f", "--file", type=str, default="MON.json", help="Road network file")
+    parser.add_argument("--seed", type=int, default=66, help="Random seed for reproducibility")
     
     args = parser.parse_args()
     
     if args.mode == "ga":
-        run_ga_experiment(args.size, args.population, args.generations)
+        run_ga_experiment(args.size, args.population, args.generations, args.seed, 50)
     elif args.mode == "benchmark":
-        benchmark_algorithms(args.instances, args.size)
+        benchmark_algorithms(args.instances, args.size, args.seed)
     elif args.mode == "timebudget":
-        time_budget_comparison(args.instances, args.size)
+        time_budget_comparison(args.instances, args.size, args.seed)
     elif args.mode == "roadnetwork":
-        road_network_experiment(args.file)
+        road_network_experiment(args.file, args.seed)
