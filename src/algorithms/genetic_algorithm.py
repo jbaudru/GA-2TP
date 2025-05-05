@@ -5,7 +5,7 @@ import numpy as np
 class GeneticAlgorithm:
     """Genetic algorithm implementation for the 2-Terminal Problem"""
     
-    def __init__(self, graph, pop_size=20, mutation_rate=0.1, encode_len=8):
+    def __init__(self, graph, pop_size=20, seed=42, mutation_rate=0.1, encode_len=8):
         """Initialize the GA with the problem parameters"""
         self.graph = graph
         self.pop_size = pop_size
@@ -13,7 +13,13 @@ class GeneticAlgorithm:
         self.encode_len = encode_len
         self.bit_count = 2 * encode_len  # For meeting and dropping points
         self.terminals = None
-    
+        self.fitness_cache = {}  # Cache for fitness evaluations
+        
+        # Set random seed for reproducibility
+        self.seed = seed
+        random.seed(self.seed)
+        np.random.seed(self.seed)
+        
     def set_terminals(self, agent1_start, agent2_start, agent1_dest, agent2_dest):
         """Set the terminal nodes for the problem"""
         self.terminals = (agent1_start, agent2_start, agent1_dest, agent2_dest)
@@ -42,7 +48,10 @@ class GeneticAlgorithm:
         return numbers[::-1]
     
     def fitness(self, individual):
-        """Calculate fitness of an individual"""
+        """Calculate fitness of an individual with caching"""
+        if individual in self.fitness_cache:
+            return self.fitness_cache[individual]
+            
         if not self.terminals:
             raise ValueError("Terminal nodes not set")
             
@@ -51,6 +60,7 @@ class GeneticAlgorithm:
         meeting_point, dropping_point = points
         
         if meeting_point == dropping_point:
+            self.fitness_cache[individual] = float('-inf')
             return float('-inf')  # Penalize same points
         
         # Calculate using path distances
@@ -65,9 +75,12 @@ class GeneticAlgorithm:
             
             total = sum_m + sum_k + sum_e
         except:
+            self.fitness_cache[individual] = float('-inf')
             return float('-inf')
         
-        return -total  # Negative since GA maximizes fitness
+        result = -total  # Negative since GA maximizes fitness
+        self.fitness_cache[individual] = result
+        return result
     
     def populate(self):
         """Generate initial population"""
@@ -96,13 +109,27 @@ class GeneticAlgorithm:
                 individual ^= (1 << i)
         return individual
     
-    def evolve(self, population):
-        """Create a new individual through evolution"""
-        p1 = self.tournament_selection(population)
-        p2 = self.tournament_selection(population)
-        c = self.crossover(p1, p2)
-        c = self.mutation(c)
-        return c
+    def evolve(self, population, tabu_list=None):
+        """Create a new individual through evolution with tabu list"""
+        if tabu_list is None:
+            tabu_list = set()
+            
+        max_attempts = 10  # Prevent infinite loops
+        attempts = 0
+        
+        while attempts < max_attempts:
+            p1 = self.tournament_selection(population)
+            p2 = self.tournament_selection(population)
+            c = self.crossover(p1, p2)
+            c = self.mutation(c)
+            
+            if c not in tabu_list:
+                return c
+                
+            attempts += 1
+        
+        # If we couldn't find a non-tabu solution, generate random one
+        return self.generate_individual()
     
     def run(self, steps=500, verbose=True):
         """Run the genetic algorithm for a specified number of steps"""
@@ -115,12 +142,24 @@ class GeneticAlgorithm:
         best_fitness = float('-inf')
         best_solution = None
         
+        evaluated_solutions = set()  # Track unique solutions evaluated
+        
         for i in range(steps):
             population_history.append(population[:])
+            
+            # Track unique solutions
+            for ind in population:
+                evaluated_solutions.add(ind)
+                
             current_fitness = [self.fitness(ind) for ind in population]
             fitness_history.append(current_fitness)
             
-            population.append(self.evolve(population))
+            # Generate new unique individual
+            new_individual = self.evolve(population)
+            while new_individual in evaluated_solutions:
+                new_individual = self.evolve(population)
+            
+            population.append(new_individual)
             population = sorted(population, key=self.fitness, reverse=True)[:self.pop_size]
             
             top_fit = self.fitness(population[0])

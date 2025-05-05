@@ -31,7 +31,7 @@ def plot_fitness_progress(fitness_history, pop_size=None, steps=None):
     plt.legend()
     
     plt.tight_layout()
-    base_name = f"output/fitness_progress_N{pop_size}_s{steps}_P{pop_size}"
+    base_name = f"output/cache_fitness_progress_N{pop_size}_s{steps}_P{pop_size}"
     img_name = f"{base_name}.png"
     txt_name = f"{base_name}.txt"
     

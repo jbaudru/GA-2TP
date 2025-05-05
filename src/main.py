@@ -27,16 +27,24 @@ def run_ga_experiment(graph_size=100, pop_size=20, steps=500, seed=None, num_exp
     
     print(f"Running {num_experiments} experiments with graph size {graph_size}, population {pop_size}, steps {steps}")
     
+    # Create a separate random generator for terminals with a derived but deterministic seed
+    terminal_rng = random.Random()
+    
+    # If main seed is provided, derive terminal seed from it (adding a large prime number)
+    terminal_seed = (seed + 104729) 
+    terminal_rng.seed(terminal_seed)
+    
+    
     for exp_idx in range(num_experiments):
         # Create graph
         graph = TransportationGraph(graph_size)
         
         # Generate random terminals
-        terminals = graph.generate_random_terminals()
-        agent1_start, agent2_start, agent1_dest, agent2_dest = terminals
+        terminals = graph.generate_random_terminals(rng=terminal_rng)
+        #agent1_start, agent2_start, agent1_dest, agent2_dest = terminals
         
         # Run GA
-        ga = GeneticAlgorithm(graph, pop_size=pop_size)
+        ga = GeneticAlgorithm(graph, pop_size=pop_size, seed=seed)
         ga.set_terminals(*terminals)
         
         start_time = time.time()
@@ -151,7 +159,7 @@ def road_network_experiment(filename, seed=None):
     print(f"Agent 2: start={agent2_start}, destination={agent2_dest}")
     
     # Run GA with step limit
-    ga = GeneticAlgorithm(graph)
+    ga = GeneticAlgorithm(graph, pop_size=10, seed=seed)
     ga.set_terminals(*terminals)
     
     start_time = time.time()
@@ -175,7 +183,7 @@ if __name__ == "__main__":
                         default="ga", help="Mode to run")
     parser.add_argument("-s", "--size", type=int, default=100, help="Graph size")
     parser.add_argument("-p", "--population", type=int, default=5, help="Population size")
-    parser.add_argument("-g", "--generations", type=int, default=500, help="Number of generations")
+    parser.add_argument("-g", "--generations", type=int, default=250, help="Number of generations")
     parser.add_argument("-i", "--instances", type=int, default=10, help="Number of benchmark instances")
     parser.add_argument("-f", "--file", type=str, default="MON.json", help="Road network file")
     parser.add_argument("--seed", type=int, default=66, help="Random seed for reproducibility")

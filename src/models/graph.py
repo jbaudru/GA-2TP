@@ -31,22 +31,31 @@ class TransportationGraph:
         self.N = self.G.number_of_nodes()
         return self
     
-    def generate_random_terminals(self):
-        """Generate random start and end positions for two agents"""
+    def generate_random_terminals(self, rng=None):
+        """Generate random start and end positions for two agents
+        
+        Args:
+            rng: Optional random number generator to use (default: None)
+        
+        Returns:
+            Tuple of (agent1_start, agent2_start, agent1_dest, agent2_dest)
+        """
         nodes = list(self.G.nodes())
+        # Use provided RNG or fall back to standard random module
+        rand = rng if rng is not None else random
         
-        agent1_start = random.choice(nodes)
+        agent1_start = rand.choice(nodes)
         
-        agent2_start = random.choice(nodes)
+        agent2_start = rand.choice(nodes)
         while agent2_start == agent1_start:
-            agent2_start = random.choice(nodes)
+            agent2_start = rand.choice(nodes)
             
-        agent1_dest = random.choice(nodes)
+        agent1_dest = rand.choice(nodes)
         while agent1_dest == agent1_start:
-            agent1_dest = random.choice(nodes)
+            agent1_dest = rand.choice(nodes)
             
-        agent2_dest = random.choice(nodes)
+        agent2_dest = rand.choice(nodes)
         while agent2_dest in [agent2_start, agent1_dest]:
-            agent2_dest = random.choice(nodes)
+            agent2_dest = rand.choice(nodes)
             
         return agent1_start, agent2_start, agent1_dest, agent2_dest
