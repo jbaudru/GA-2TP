@@ -55,10 +55,6 @@ def run_ga_experiment(graph_size=100, pop_size=20, steps=500, seed=None, num_exp
         all_fitness_history.append(result['fitness_history'])
         all_total_distances.append(result['total_distance'])
         all_execution_times.append(execution_time)
-        
-        # Print progress
-        if (exp_idx + 1) % 10 == 0:
-            print(f"Completed {exp_idx + 1}/{num_experiments} experiments")
     
     # Calculate average fitness history
     # Find minimum length across all histories
