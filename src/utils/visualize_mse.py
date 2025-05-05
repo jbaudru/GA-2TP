@@ -1,30 +1,19 @@
 import os
 import numpy as np
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
-
-import os
+from scipy.stats import gaussian_kde
+import seaborn as sns
 
 def parse_error_distribution_files(directory, parameter, prefix="error_distribution"):
-    """
-    Parse error distribution files and extract relevant data.
-    
-    Args:
-        directory (str): Directory containing the error distribution files.
-        parameter (str): Parameter to compare (e.g., "Graph Size", "Population Size").
-        prefix (str): Prefix of the files to parse.
-    
-    Returns:
-        list: A list of dictionaries containing the specified parameter and MSE values.
-    """
+    """Parse error distribution files and extract relevant data."""
     data = []
     for filename in os.listdir(directory):
         if filename.startswith(prefix):
             with open(os.path.join(directory, filename), 'r') as file:
                 lines = file.readlines()
                 param_value = None
-                mse_values = []
+                mre_values = []
                 
                 # Extract the specified parameter
                 for line in lines:
@@ -32,77 +21,92 @@ def parse_error_distribution_files(directory, parameter, prefix="error_distribut
                         param_value = line.split(":")[1].strip()
                         break
                 
-                # Extract MSE values
+                # Extract relative errors
                 for line in lines[12:]:
                     try:
                         parts = line.split()
-                        if len(parts) >= 4:  # Ensure there are enough columns
-                            error = float(parts[3])  # Extract the "Error" column
-                            mse_values.append(error ** 2)  # Square the error to get MSE
+                        if len(parts) >= 4:
+                            ga_distance = float(parts[1])
+                            exact_distance = float(parts[2])
+                            relative_error = float(parts[4])
+                            mre_values.append(relative_error)
                     except (IndexError, ValueError):
                         continue
                 
-                if param_value is not None and mse_values:
-                    data.append({"parameter": param_value, "mse_values": mse_values})
+                if param_value is not None and mre_values:
+                    data.append({"parameter": param_value, "mre_values": mre_values})
     return data
 
-def plot_mse_comparison(data, parameter):
-    """
-    Plot KDE plot for MSE distributions based on the specified parameter.
-    
-    Args:
-        data (list): List of dictionaries containing the parameter and MSE values.
-        parameter (str): Parameter to compare (e.g., "Graph Size", "Population Size").
-    """
+def plot_mre_distribution(data, parameter):
+    """Create elegant distribution plots for MRE values."""
     plt.figure(figsize=(8,6))
     
-    # Sort the data by the parameter value (assuming numeric values)
+    # Sort data by parameter value
     data = sorted(data, key=lambda x: float(x["parameter"].split(":")[0].strip()))
-
     
-    palette = sns.color_palette("tab10", 10)
+    # Create color palette
+    palette = sns.color_palette("viridis", len(data))
     
-    # Plot each file's KDE curve
+    # Setup consistent x-grid
+    x_grid = np.linspace(0, 100, 500)  # Focus on 0 to 0.5 range
+    
+    # Plot smooth distributions
     for idx, entry in enumerate(data):
         param_value = entry["parameter"]
-        mse_values = entry["mse_values"]
-        print(mse_values)
+        mre_values = np.array(entry["mre_values"])
         
-        if all(mse == 0 for mse in mse_values):
-            # Plot a vertical line at 0 if all MSE values are 0
-            plt.axvline(x=0, color=palette[idx], linestyle='--', label=f"{parameter}: {param_value}")
-        else:
-            sns.kdeplot(
-                mse_values, label=f"{parameter}: {param_value}",
-                fill=True, alpha=0.1, linewidth=1, color=palette[idx]
-            )
+        if len(mre_values) < 2:
+            continue
             
-    # Customize plot
-    #plt.title(f"MSE Distribution KDE Plot by {parameter}")
-    plt.xlabel("Mean Squared Error (MSE)")
-    plt.ylabel("Density")
-    plt.legend()
-    plt.grid(True)
+        try:
+            # Apply kernel density estimation
+            kde = gaussian_kde(mre_values, bw_method='scott')
+            density = kde(x_grid)
+            
+            # Normalize for consistent scaling
+            if np.max(density) > 0:
+                density = density / np.max(density)
+                
+                # Plot smooth curve with filled area
+                plt.plot(x_grid, density, color=palette[idx], linewidth=2, 
+                         label=f"{parameter}: {param_value}")
+                plt.fill_between(x_grid, density, alpha=0.15, color=palette[idx])
+        except:
+            # Fallback to histogram if KDE fails
+            hist, edges = np.histogram(mre_values, bins=20, range=(0, 100), density=True)
+            centers = (edges[:-1] + edges[1:]) / 2
+            if np.max(hist) > 0:
+                hist = hist / np.max(hist)
+                plt.plot(centers, hist, color=palette[idx], linewidth=2,
+                         label=f"{parameter}: {param_value}")
+    
+    # Style the plot
+    plt.xlabel("Mean Relative Error (MRE)", fontsize=12)
+    plt.ylabel("Normalized Kernel Density Estimation (KDE)", fontsize=12)
+    plt.xlim(-4, 100)
+    plt.ylim(0, 1.05)
+    plt.grid(True, alpha=0.3, linestyle='--')
+    #plt.title(f"Distribution of Mean Relative Error by {parameter}", fontsize=14)
+    
+    # Add legend with clean formatting
+    plt.legend(fontsize=10)
     plt.tight_layout()
-    plt.xlim(-0.5, 5)  # Set x-axis limits from 0 to 0.5
-    plt.ylim(0, 5)  # Set y-axis limits from 0 to 5
-    plt.savefig(f"../output/mse_distribution_{parameter}_V100.png", dpi=300, bbox_inches='tight')
+    
+    # Save and show
+    plt.savefig(f"../output/mre_distribution_gen_{parameter}_t1000.png", dpi=300, bbox_inches='tight')
     plt.show()
 
 if __name__ == "__main__":
     # Directory containing the error distribution files
-    directory = "../output/error/pop_size_v100/"
+    directory = "../output/error/gen_p20_t1000/"
     
     # User-specified parameter for comparison
-    parameter = "Population Size"  # Change to "Population Size" if needed
+    parameter = "Graph Size"  # Change to "Population Size" if needed
     
-    # Parse files and extract data
+    # Parse files and plot
     data = parse_error_distribution_files(directory, parameter)
-    print(len(data), "files parsed")
-    print(len(data[0]))
     
-    # Plot KDE
     if data:
-        plot_mse_comparison(data, parameter)
+        plot_mre_distribution(data, parameter)
     else:
         print(f"No valid error distribution files found for parameter: {parameter}")

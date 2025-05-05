@@ -1,10 +1,11 @@
-Algorithm Comparison Results
+Error Distribution Results
 Graph Size: 10
 Number of Instances: 50
 
 Error Statistics:
+Mean Error: 0.0247
+Std Error: 0.0782
 Mean Relative Error: 0.18%
-Std Relative Error: 0.56%
 Max Relative Error: 2.16%
 
 Instance  GA             Exact          Error          Relative Error %

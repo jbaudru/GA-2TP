@@ -42,7 +42,7 @@ class Benchmarker:
             # Run GA
             ga = self.GA(graph, pop_size=pop_size)
             ga.set_terminals(*terminals)
-            ga_result = ga.run(steps=500, verbose=False)
+            ga_result = ga.run(steps=steps, verbose=False)
             ga_dist = ga_result['total_distance']
             
             if self.verbose:

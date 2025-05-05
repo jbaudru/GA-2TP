@@ -90,7 +90,7 @@ def run_ga_experiment(graph_size=100, pop_size=20, steps=500, seed=None, num_exp
         'all_distances': all_total_distances
     }
 
-def benchmark_algorithms(num_instances=50, graph_size=50, seed=None, pop_size=None, steps=500):
+def benchmark_algorithms(num_instances=50, graph_size=50, seed=None, pop_size=None, steps=None):
     """Benchmark GA vs exact algorithm"""
     # Set seed if provided
     if seed is not None:
@@ -189,8 +189,8 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mode", choices=["ga", "benchmark", "timebudget", "roadnetwork"], 
                         default="ga", help="Mode to run")
     parser.add_argument("-s", "--size", type=int, default=100, help="Graph size")
-    parser.add_argument("-p", "--population", type=int, default=5, help="Population size")
-    parser.add_argument("-g", "--generations", type=int, default=250, help="Number of generations")
+    parser.add_argument("-p", "--population", type=int, default=20, help="Population size")
+    parser.add_argument("-g", "--generations", type=int, default=1000, help="Number of generations")
     parser.add_argument("-i", "--instances", type=int, default=50, help="Number of benchmark instances")
     parser.add_argument("-f", "--file", type=str, default="MON.json", help="Road network file")
     parser.add_argument("--seed", type=int, default=66, help="Random seed for reproducibility")

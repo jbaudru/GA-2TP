@@ -3,3 +3,4 @@ seaborn
 networkx
 numpy
 tqdm
+scipy
