@@ -3,6 +3,7 @@ import time
 import matplotlib.pyplot as plt
 import random
 import numpy as np
+from tqdm import tqdm
 
 from models.graph import TransportationGraph
 from algorithms.genetic_algorithm import GeneticAlgorithm
@@ -35,7 +36,7 @@ def run_ga_experiment(graph_size=100, pop_size=20, steps=500, seed=None, num_exp
     terminal_rng.seed(terminal_seed)
     
     
-    for exp_idx in range(num_experiments):
+    for exp_idx in tqdm(range(num_experiments)):
         # Create graph
         graph = TransportationGraph(graph_size)
         
@@ -48,7 +49,7 @@ def run_ga_experiment(graph_size=100, pop_size=20, steps=500, seed=None, num_exp
         ga.set_terminals(*terminals)
         
         start_time = time.time()
-        result = ga.run(steps=steps)
+        result = ga.run(steps=steps, verbose=False)
         execution_time = time.time() - start_time
         
         all_fitness_history.append(result['fitness_history'])
@@ -182,7 +183,7 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mode", choices=["ga", "benchmark", "timebudget", "roadnetwork"], 
                         default="ga", help="Mode to run")
     parser.add_argument("-s", "--size", type=int, default=100, help="Graph size")
-    parser.add_argument("-p", "--population", type=int, default=5, help="Population size")
+    parser.add_argument("-p", "--population", type=int, default=10, help="Population size")
     parser.add_argument("-g", "--generations", type=int, default=250, help="Number of generations")
     parser.add_argument("-i", "--instances", type=int, default=10, help="Number of benchmark instances")
     parser.add_argument("-f", "--file", type=str, default="MON.json", help="Road network file")
