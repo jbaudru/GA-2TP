@@ -98,6 +98,95 @@ def plot_algorithm_comparison(ga_results, exact_results, graph_size, num_instanc
         'max_relative_error': np.max(rel_errors)
     }
 
+
+def plot_mse_comparison(ga_results, exact_results, graph_size, num_instances, name):
+    """
+    Plot error distribution between GA and exact algorithm results
+    
+    Args:
+        ga_results (list): Results from genetic algorithm
+        exact_results (list): Results from exact algorithm
+        graph_size (int): Size of the graph
+        num_instances (int): Number of instances tested
+        
+    Returns:
+        dict: Error statistics
+    """
+    # Calculate errors and statistics
+    errors = np.array(ga_results) - np.array(exact_results)
+    rel_errors = errors / np.array(exact_results) * 100
+    mean_error = np.mean(errors)
+    std_error = np.std(errors)
+    
+    # Create figure
+    plt.figure(figsize=(8,6))
+    
+    # Plot error distribution as histogram with KDE
+    sns.histplot(errors, kde=True, color='red', bins=min(15, len(errors)//2))
+    
+    # Add reference lines
+    plt.axvline(x=0, color='r', linestyle='--', label='Zero Error')
+    plt.axvline(x=mean_error, color='g', linestyle='-', 
+                label=f'Mean Error: {mean_error:.2f}')
+    
+    # Add confidence interval (mean ± std)
+    plt.axvline(x=mean_error - std_error, color='g', linestyle=':', 
+                label=f'Mean ± Std: {mean_error:.2f} ± {std_error:.2f}')
+    plt.axvline(x=mean_error + std_error, color='g', linestyle=':')
+    
+    # Set labels and title
+    plt.xlabel('Error (GA - Exact)')
+    plt.ylim(0, 50)
+    plt.xlim(0, 1)
+    plt.ylabel('Frequency')
+    #plt.title(f'Error Distribution (N={graph_size}, Instances={num_instances})')
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    
+    # Add statistics as text box
+    stats_text = (
+        f"Mean Error: {mean_error:.2f}\n"
+        f"Std Error: {std_error:.2f}\n"
+        f"Mean Rel. Error: {np.mean(rel_errors):.2f}%\n"
+        f"Max Rel. Error: {np.max(rel_errors):.2f}%"
+    )
+    plt.annotate(stats_text, xy=(0.02, 0.95), xycoords='axes fraction',
+                bbox=dict(facecolor='white', alpha=0.8), fontsize=10,
+                verticalalignment='top')
+    
+    # Save results
+    base_name = f'output/error_distribution_' + name
+    img_name = f"{base_name}.png"
+    txt_name = f"{base_name}.txt"
+    
+    # Save image
+    plt.savefig(img_name, dpi=300)
+    
+    # Save results to text file
+    with open(txt_name, 'w') as f:
+        f.write(f"Error Distribution Results\n")
+        f.write(f"Graph Size: {graph_size}\n")
+        f.write(f"Number of Instances: {num_instances}\n\n")
+        f.write(f"Error Statistics:\n")
+        f.write(f"Mean Error: {mean_error:.4f}\n")
+        f.write(f"Std Error: {std_error:.4f}\n")
+        f.write(f"Mean Relative Error: {np.mean(rel_errors):.2f}%\n")
+        f.write(f"Max Relative Error: {np.max(rel_errors):.2f}%\n\n")
+        
+        f.write(f"{'Instance':<10}{'GA':<15}{'Exact':<15}{'Error':<15}{'Relative Error %':<15}\n")
+        for i, (ga, exact, err, rel_err) in enumerate(zip(ga_results, exact_results, errors, rel_errors)):
+            f.write(f"{i:<10}{ga:<15.2f}{exact:<15.2f}{err:<15.2f}{rel_err:<15.2f}\n")
+    
+    plt.tight_layout()
+    plt.show()
+    
+    return {
+        'mean_error': mean_error,
+        'std_error': std_error,
+        'mean_relative_error': np.mean(rel_errors),
+        'max_relative_error': np.max(rel_errors)
+    }
+
 def raincloud_plot(data, labels, ax):
     """Create a raincloud plot for comparing distributions"""
     colors = sns.color_palette()[:len(labels)]

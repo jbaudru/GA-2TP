@@ -8,7 +8,7 @@ from tqdm import tqdm
 from models.graph import TransportationGraph
 from algorithms.genetic_algorithm import GeneticAlgorithm
 from algorithms.exact_algorithm import ExactAlgorithm
-from utils.visualization import plot_fitness_progress, plot_algorithm_comparison
+from utils.visualization import plot_fitness_progress, plot_algorithm_comparison, plot_mse_comparison
 from evaluation.benchmarking import Benchmarker
 
 def set_seed(seed):
@@ -90,7 +90,7 @@ def run_ga_experiment(graph_size=100, pop_size=20, steps=500, seed=None, num_exp
         'all_distances': all_total_distances
     }
 
-def benchmark_algorithms(num_instances=10, graph_size=50, seed=None):
+def benchmark_algorithms(num_instances=50, graph_size=50, seed=None, pop_size=None, steps=500):
     """Benchmark GA vs exact algorithm"""
     # Set seed if provided
     if seed is not None:
@@ -99,18 +99,26 @@ def benchmark_algorithms(num_instances=10, graph_size=50, seed=None):
     benchmarker = Benchmarker(
         TransportationGraph,
         GeneticAlgorithm,
-        ExactAlgorithm
+        ExactAlgorithm,
+        seed=seed
     )
     
     print(f"Running comparison on {num_instances} instances with graph size {graph_size}")
     
+    # num_instances=50, graph_size=100, pop_size=20, steps=250
+    
     ga_results, exact_results = benchmarker.compare_algorithms(
         num_instances=num_instances,
-        graph_size=graph_size
+        graph_size=graph_size,
+        pop_size=pop_size,
+        steps=steps,
     )
     
     # Plot comparison
-    plot_algorithm_comparison(ga_results, exact_results, graph_size, num_instances)
+    #plot_algorithm_comparison(ga_results, exact_results, graph_size, num_instances)
+    str_para_file = f"V{graph_size}_P{pop_size}_T{steps}"
+    plot_mse_comparison(ga_results, exact_results, graph_size, num_instances, str_para_file)
+
 
 def time_budget_comparison(num_instances=10, graph_size=50, seed=None):
     """Compare algorithms with equal time budgets"""
@@ -133,6 +141,7 @@ def time_budget_comparison(num_instances=10, graph_size=50, seed=None):
     
     # Plot comparison
     plot_algorithm_comparison(ga_results, exact_results, graph_size, num_instances)
+    
 
 def road_network_experiment(filename, seed=None):
     """Run experiment on real road network"""
@@ -178,19 +187,20 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Two-Terminal Problem Solver")
     parser.add_argument("-m", "--mode", choices=["ga", "benchmark", "timebudget", "roadnetwork"], 
                         default="ga", help="Mode to run")
-    parser.add_argument("-s", "--size", type=int, default=100, help="Graph size")
-    parser.add_argument("-p", "--population", type=int, default=50, help="Population size")
+    parser.add_argument("-s", "--size", type=int, default=50, help="Graph size")
+    parser.add_argument("-p", "--population", type=int, default=5, help="Population size")
     parser.add_argument("-g", "--generations", type=int, default=250, help="Number of generations")
-    parser.add_argument("-i", "--instances", type=int, default=10, help="Number of benchmark instances")
+    parser.add_argument("-i", "--instances", type=int, default=50, help="Number of benchmark instances")
     parser.add_argument("-f", "--file", type=str, default="MON.json", help="Road network file")
     parser.add_argument("--seed", type=int, default=66, help="Random seed for reproducibility")
     
     args = parser.parse_args()
+
     
     if args.mode == "ga":
         run_ga_experiment(args.size, args.population, args.generations, args.seed, 50)
     elif args.mode == "benchmark":
-        benchmark_algorithms(args.instances, args.size, args.seed)
+        benchmark_algorithms(args.instances, args.size, args.seed, args.population, args.generations)
     elif args.mode == "timebudget":
         time_budget_comparison(args.instances, args.size, args.seed)
     elif args.mode == "roadnetwork":
