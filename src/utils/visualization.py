@@ -122,7 +122,7 @@ def plot_mse_comparison(ga_results, exact_results, graph_size, num_instances, na
     plt.figure(figsize=(8,6))
     
     # Plot error distribution as histogram with KDE
-    sns.histplot(errors, kde=True, color='red', bins=min(15, len(errors)//2))
+    sns.histplot(errors, kde=True, color='red', bins=50*int(max(errors)), alpha=0.5)
     
     # Add reference lines
     plt.axvline(x=0, color='r', linestyle='--', label='Zero Error')
@@ -137,22 +137,25 @@ def plot_mse_comparison(ga_results, exact_results, graph_size, num_instances, na
     # Set labels and title
     plt.xlabel('Error (GA - Exact)')
     plt.ylim(0, 50)
-    plt.xlim(0, 1)
+    plt.xlim(0, max(errors))
     plt.ylabel('Frequency')
     #plt.title(f'Error Distribution (N={graph_size}, Instances={num_instances})')
     plt.grid(True, alpha=0.3)
     plt.legend()
     
     # Add statistics as text box
+    """
     stats_text = (
         f"Mean Error: {mean_error:.2f}\n"
         f"Std Error: {std_error:.2f}\n"
         f"Mean Rel. Error: {np.mean(rel_errors):.2f}%\n"
         f"Max Rel. Error: {np.max(rel_errors):.2f}%"
     )
+    
     plt.annotate(stats_text, xy=(0.02, 0.95), xycoords='axes fraction',
                 bbox=dict(facecolor='white', alpha=0.8), fontsize=10,
                 verticalalignment='top')
+    """
     
     # Save results
     base_name = f'output/error_distribution_' + name
