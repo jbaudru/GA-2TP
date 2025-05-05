@@ -183,11 +183,12 @@ def road_network_experiment(filename, seed=None):
     
     return ga_result, exact_result
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Two-Terminal Problem Solver")
     parser.add_argument("-m", "--mode", choices=["ga", "benchmark", "timebudget", "roadnetwork"], 
                         default="ga", help="Mode to run")
-    parser.add_argument("-s", "--size", type=int, default=25, help="Graph size")
+    parser.add_argument("-s", "--size", type=int, default=100, help="Graph size")
     parser.add_argument("-p", "--population", type=int, default=5, help="Population size")
     parser.add_argument("-g", "--generations", type=int, default=250, help="Number of generations")
     parser.add_argument("-i", "--instances", type=int, default=50, help="Number of benchmark instances")

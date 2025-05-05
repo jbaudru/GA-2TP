@@ -36,7 +36,7 @@ class Benchmarker:
             
             # Run exact algorithm
             exact_solver = self.ExactAlgo(graph)
-            exact_result = exact_solver.solve(*terminals, verbose=False)
+            exact_result = exact_solver.solve_precomp(*terminals, verbose=False)
             exact_dist = exact_result['total_distance']
             
             # Run GA

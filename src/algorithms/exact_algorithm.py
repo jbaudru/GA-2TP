@@ -58,3 +58,49 @@ class ExactAlgorithm:
             'total_distance': min_sum,
             'runtime': runtime
         }
+        
+    def solve_precomp(self, agent1_start, agent2_start, agent1_dest, agent2_dest, verbose=True):
+        """Find the optimal solution by checking all possible meeting and dropping points"""
+        min_sum = float('inf')
+        best_m = None
+        best_k = None
+        
+        G = self.graph.G
+        
+        # Precompute all shortest paths
+        shortest_paths = dict(nx.all_pairs_dijkstra_path_length(G, weight='weight'))
+        
+        start_time = time.time()
+        
+        if verbose:
+            node_iterator = tqdm(G.nodes())
+        else:
+            node_iterator = G.nodes()
+            
+        for m in node_iterator:
+            for k in G.nodes():
+                if m != k:
+                    try:
+                        # Use precomputed shortest paths
+                        sum_m = shortest_paths[agent1_start][m] + shortest_paths[agent2_start][m]
+                        sum_k = shortest_paths[m][k]
+                        sum_e = shortest_paths[k][agent1_dest] + shortest_paths[k][agent2_dest]
+                        
+                        total = sum_m + sum_k + sum_e
+                        
+                    except KeyError:
+                        # Skip if nodes not found in precomputed paths
+                        continue
+                    
+                    if total < min_sum:
+                        min_sum = total
+                        best_m = m
+                        best_k = k
+        
+        runtime = time.time() - start_time
+                        
+        return {
+            'solution': (best_m, best_k),
+            'total_distance': min_sum,
+            'runtime': runtime
+        }

@@ -1,6 +1,8 @@
 Error Distribution Results
 Graph Size: 25
 Number of Instances: 50
+Population Size: 5
+Generation: 250
 
 Error Statistics:
 Mean Error: 0.1206
