@@ -186,35 +186,84 @@ class GeneticAlgorithm:
             'fitness_history': fitness_history
         }
     
-    def run_with_time_budget(self, time_budget, verbose=False):
-        """Run the GA with a time budget"""
+    def run_with_time_budget(self, time_budget, verbose=True):
+        """Run the GA with a time budget while tracking the same metrics as run()"""
         if not self.terminals:
             raise ValueError("Terminal nodes not set")
-            
+                
         population = self.populate()
+        population_history = []
+        fitness_history = []
         best_fitness = float('-inf')
         best_solution = None
+        
+        evaluated_solutions = set()  # Track unique solutions evaluated
         
         start_time = time.time()
         iterations = 0
         
-        while time.time() - start_time < time_budget:
+        # Ensure we run at least one iteration
+        end_time = time.time()
+        while end_time - start_time < time_budget:
             iterations += 1
-            population.append(self.evolve(population))
+            population_history.append(population[:])
+            
+            # Track unique solutions
+            for ind in population:
+                evaluated_solutions.add(ind)
+                    
+            current_fitness = [self.fitness(ind) for ind in population]
+            fitness_history.append(current_fitness)
+            
+            # Generate new unique individual
+            new_individual = self.evolve(population)
+            attempt_count = 0
+            max_attempts = 100  # Prevent too many attempts
+            while new_individual in evaluated_solutions and time.time() - start_time < time_budget:
+                new_individual = self.evolve(population)
+                attempt_count += 1
+                if attempt_count >= max_attempts:
+                    break
+            
+            population.append(new_individual)
             population = sorted(population, key=self.fitness, reverse=True)[:self.pop_size]
             
             top_fit = self.fitness(population[0])
             if top_fit > best_fitness:
                 best_fitness = top_fit
                 best_solution = population[0]
+                if verbose:
+                    points = self.byte_to_number(best_solution)
+                    print(f"Iteration: {iterations} Fitness: {top_fit:.4f}")
+                    print(f"Meeting point: {points[0]}, Dropping point: {points[1]}")
+            
+            end_time = time.time()
+        
+        # Make sure we have at least one solution
+        if best_solution is None and population:
+            best_solution = population[0]
+            best_fitness = self.fitness(best_solution)
+        
+        # Handle case where no solution was found (should be extremely rare)
+        if best_solution is None:
+            best_solution = self.generate_individual()
+            best_fitness = self.fitness(best_solution)
+        
+        final_solution = self.byte_to_number(best_solution)
         
         if verbose:
-            print(f"Completed {iterations} iterations in {time_budget:.2f}s")
-            
-        final_solution = self.byte_to_number(best_solution)
+            elapsed_time = time.time() - start_time
+            print(f"Completed {iterations} iterations in {elapsed_time:.2f}s")
+            print("Final Solution:")
+            print(f"Meeting point: {final_solution[0]}")
+            print(f"Dropping point: {final_solution[1]}")
+            print(f"Final fitness: {best_fitness:.4f} \n\n")
+        
         return {
             'solution': final_solution,
             'fitness': best_fitness,
             'total_distance': -best_fitness,
+            'population_history': population_history,
+            'fitness_history': fitness_history,
             'iterations': iterations
         }

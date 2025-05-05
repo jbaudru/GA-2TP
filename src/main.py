@@ -120,7 +120,7 @@ def benchmark_algorithms(num_instances=50, graph_size=50, seed=None, pop_size=No
     plot_mse_comparison(ga_results, exact_results, graph_size, num_instances, str_para_file)
 
 
-def time_budget_comparison(num_instances=10, graph_size=50, seed=None):
+def time_budget_comparison(num_instances=50, graph_size=50, seed=None, pop_size=None):
     """Compare algorithms with equal time budgets"""
     # Set seed if provided
     if seed is not None:
@@ -136,11 +136,14 @@ def time_budget_comparison(num_instances=10, graph_size=50, seed=None):
     
     ga_results, exact_results, exact_times = benchmarker.compare_with_time_budget(
         num_instances=num_instances,
-        graph_size=graph_size
+        graph_size=graph_size,
+        pop_size=pop_size,
     )
     
-    # Plot comparison
-    plot_algorithm_comparison(ga_results, exact_results, graph_size, num_instances)
+    print(f"Exact algorithm average time: {np.mean(exact_times):.3f}s")
+    
+    str_para_file = f"timebudget_V{graph_size}_P{pop_size}"
+    plot_mse_comparison(ga_results, exact_results, graph_size, num_instances, str_para_file)
     
 
 def road_network_experiment(filename, seed=None):
@@ -188,8 +191,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Two-Terminal Problem Solver")
     parser.add_argument("-m", "--mode", choices=["ga", "benchmark", "timebudget", "roadnetwork"], 
                         default="ga", help="Mode to run")
-    parser.add_argument("-s", "--size", type=int, default=100, help="Graph size")
-    parser.add_argument("-p", "--population", type=int, default=20, help="Population size")
+    parser.add_argument("-s", "--size", type=int, default=400, help="Graph size")
+    parser.add_argument("-p", "--population", type=int, default=50, help="Population size")
     parser.add_argument("-g", "--generations", type=int, default=1000, help="Number of generations")
     parser.add_argument("-i", "--instances", type=int, default=50, help="Number of benchmark instances")
     parser.add_argument("-f", "--file", type=str, default="MON.json", help="Road network file")
@@ -203,6 +206,6 @@ if __name__ == "__main__":
     elif args.mode == "benchmark":
         benchmark_algorithms(args.instances, args.size, args.seed, args.population, args.generations)
     elif args.mode == "timebudget":
-        time_budget_comparison(args.instances, args.size, args.seed)
+        time_budget_comparison(args.instances, args.size, args.seed, args.population)
     elif args.mode == "roadnetwork":
         road_network_experiment(args.file, args.seed)

@@ -1,0 +1,61 @@
+Error Distribution Results
+Graph Size: 10
+Number of Instances: 50
+
+Error Statistics:
+Mean Error: inf
+Std Error: nan
+Mean Relative Error: inf%
+Max Relative Error: inf%
+
+Instance  GA             Exact          Error          Relative Error %
+0         inf            11.49          inf            inf            
+1         inf            12.67          inf            inf            
+2         inf            12.50          inf            inf            
+3         inf            7.24           inf            inf            
+4         9.01           6.19           2.82           45.63          
+5         inf            10.62          inf            inf            
+6         inf            12.87          inf            inf            
+7         13.89          11.20          2.69           23.99          
+8         inf            12.44          inf            inf            
+9         inf            12.62          inf            inf            
+10        7.79           7.79           0.00           0.00           
+11        inf            13.37          inf            inf            
+12        inf            8.74           inf            inf            
+13        10.42          7.90           2.53           32.01          
+14        inf            15.38          inf            inf            
+15        inf            9.47           inf            inf            
+16        6.80           3.63           3.17           87.28          
+17        inf            10.94          inf            inf            
+18        inf            11.26          inf            inf            
+19        13.05          12.23          0.81           6.65           
+20        inf            9.07           inf            inf            
+21        inf            6.70           inf            inf            
+22        9.41           8.41           1.01           11.96          
+23        inf            9.73           inf            inf            
+24        inf            9.98           inf            inf            
+25        11.03          8.77           2.26           25.75          
+26        inf            9.89           inf            inf            
+27        inf            11.67          inf            inf            
+28        7.80           7.80           0.00           0.00           
+29        inf            11.28          inf            inf            
+30        inf            8.27           inf            inf            
+31        12.86          11.37          1.49           13.06          
+32        inf            7.15           inf            inf            
+33        inf            10.06          inf            inf            
+34        14.20          14.14          0.06           0.43           
+35        inf            8.75           inf            inf            
+36        inf            8.91           inf            inf            
+37        10.49          8.35           2.13           25.55          
+38        inf            12.80          inf            inf            
+39        inf            9.70           inf            inf            
+40        12.01          12.01          0.00           0.00           
+41        inf            8.19           inf            inf            
+42        inf            10.64          inf            inf            
+43        10.79          10.06          0.72           7.20           
+44        inf            13.33          inf            inf            
+45        inf            13.86          inf            inf            
+46        11.59          6.80           4.79           70.51          
+47        inf            12.89          inf            inf            
+48        inf            13.78          inf            inf            
+49        13.68          13.29          0.39           2.95           
