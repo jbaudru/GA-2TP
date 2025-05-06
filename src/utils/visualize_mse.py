@@ -93,12 +93,12 @@ def plot_mre_distribution(data, parameter):
     plt.tight_layout()
     
     # Save and show
-    plt.savefig(f"../output/city{parameter}.png", dpi=300, bbox_inches='tight')
+    plt.savefig(f"../output/city{parameter}_T_20_P20.png", dpi=300, bbox_inches='tight')
     plt.show()
 
 if __name__ == "__main__":
     # Directory containing the error distribution files
-    directory = "../output/error/realworld/"
+    directory = "../output/error/realworld_P20_T_test/"
     
     # User-specified parameter for comparison
     parameter = "Graph Size"  # Change to "Population Size" if needed

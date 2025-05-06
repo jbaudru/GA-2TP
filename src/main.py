@@ -209,6 +209,8 @@ def road_network_experiment(filename, num_instances=50, seed=None, pop=20, steps
     city = filename.split(".")[0]
     str_para_file = f"realword_{city}_V{graph_size}_P{pop}_T{steps}"
     plot_mse_comparison(ga_results, exact_results, graph_size, num_instances, str_para_file)
+    print("Average GA time:", np.mean(ga_times))
+    print("Average Exact time:", np.mean(exact_times))
     return ga_results, exact_results, ga_times, exact_times
 
 
@@ -218,8 +220,8 @@ if __name__ == "__main__":
                         default="ga", help="Mode to run")
     parser.add_argument("-s", "--size", type=int, default=200, help="Graph size")
     parser.add_argument("-p", "--population", type=int, default=20, help="Population size")
-    parser.add_argument("-g", "--generations", type=int, default=500, help="Number of generations")
-    parser.add_argument("-i", "--instances", type=int, default=3, help="Number of benchmark instances")
+    parser.add_argument("-g", "--generations", type=int, default=250, help="Number of generations")
+    parser.add_argument("-i", "--instances", type=int, default=50, help="Number of benchmark instances")
     parser.add_argument("-f", "--file", type=str, default="LEV.json", help="Road network file")
     parser.add_argument("--seed", type=int, default=66, help="Random seed for reproducibility")
     
