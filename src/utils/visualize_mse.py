@@ -93,12 +93,12 @@ def plot_mre_distribution(data, parameter):
     plt.tight_layout()
     
     # Save and show
-    plt.savefig(f"../output/mre_distribution_timebudget_{parameter}_p5.png", dpi=300, bbox_inches='tight')
+    plt.savefig(f"../output/mre_distribution_timebudget_{parameter}_p20.png", dpi=300, bbox_inches='tight')
     plt.show()
 
 if __name__ == "__main__":
     # Directory containing the error distribution files
-    directory = "../output/error/p5/"
+    directory = "../output/error/p20/"
     
     # User-specified parameter for comparison
     parameter = "Graph Size"  # Change to "Population Size" if needed
