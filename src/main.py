@@ -147,45 +147,69 @@ def time_budget_comparison(num_instances=50, graph_size=50, seed=None, pop_size=
     plot_mse_comparison(ga_results, exact_results, graph_size, num_instances, str_para_file)
     
 
-def road_network_experiment(filename, seed=None):
+def road_network_experiment(filename, num_instances=50, seed=None, pop=20, steps=500):
     """Run experiment on real road network"""
+    # TODO: Repeat 50 the experiment with different random terminals and save results
     # Set seed if provided
     if seed is not None:
         set_seed(seed)
         
     import os
-    filepath = os.path.join("data", "benchmark", filename)
+    filepath = os.path.join("data", filename)
     
     # Load graph
     graph = TransportationGraph(0).load_from_json(filepath)
     
     print(f"Road network loaded with {graph.G.number_of_nodes()} nodes and {graph.G.number_of_edges()} edges")
     
+    ga_times = []
+    exact_times = []
+    ga_results = []
+    exact_results = []
+    
+    # Create a separate random generator for terminals with a derived but deterministic seed
+    terminal_rng = random.Random()
+    
+    # If main seed is provided, derive terminal seed from it (adding a large prime number)
+    terminal_seed = (seed + 104729) if seed is not None else None
+    terminal_rng.seed(terminal_seed)
     # Generate random terminals
-    terminals = graph.generate_random_terminals()
-    agent1_start, agent2_start, agent1_dest, agent2_dest = terminals
     
-    print(f"Agent 1: start={agent1_start}, destination={agent1_dest}")
-    print(f"Agent 2: start={agent2_start}, destination={agent2_dest}")
+    for i in range(num_instances):
+        terminals = graph.generate_random_terminals(rng=terminal_rng)
+        agent1_start, agent2_start, agent1_dest, agent2_dest = terminals
+        
+        print(f"Agent 1: start={agent1_start}, destination={agent1_dest}")
+        print(f"Agent 2: start={agent2_start}, destination={agent2_dest}")
+        
+        # Run GA with step limit
+        ga = GeneticAlgorithm(graph, pop_size=pop, seed=seed, encode_len=25)
+        ga.set_terminals(*terminals)
+        
+        start_time = time.time()
+        ga_result = ga.run_on_real_network(steps=steps)
+        ga_time = time.time() - start_time
+        
+        # Run exact algorithm
+        exact_solver = ExactAlgorithm(graph)
+        start_time = time.time()
+        exact_result = exact_solver.solve_precomp(*terminals)
+        exact_time = time.time() - start_time
+        
+        ga_results.append(ga_result['total_distance'])
+        exact_results.append(exact_result['total_distance'])
+        ga_times.append(ga_time)
+        exact_times.append(exact_time)
     
-    # Run GA with step limit
-    ga = GeneticAlgorithm(graph, pop_size=10, seed=seed)
-    ga.set_terminals(*terminals)
+        print(f"Exact Algorithm: {exact_result['total_distance']:.2f} ({exact_time:.3f}s)")
+        print(f"Genetic Algorithm: {ga_result['total_distance']:.2f} ({ga_time:.3f}s)")
     
-    start_time = time.time()
-    ga_result = ga.run(steps=500)
-    ga_time = time.time() - start_time
     
-    # Run exact algorithm
-    exact_solver = ExactAlgorithm(graph)
-    start_time = time.time()
-    exact_result = exact_solver.solve(*terminals)
-    exact_time = time.time() - start_time
-    
-    print(f"Exact Algorithm: {exact_result['total_distance']:.2f} ({exact_time:.3f}s)")
-    print(f"Genetic Algorithm: {ga_result['total_distance']:.2f} ({ga_time:.3f}s)")
-    
-    return ga_result, exact_result
+    graph_size = graph.get_node_count()
+    city = filename.split(".")[0]
+    str_para_file = f"realword_{city}_V{graph_size}_P{pop}_T{steps}"
+    plot_mse_comparison(ga_results, exact_results, graph_size, num_instances, str_para_file)
+    return ga_results, exact_results, ga_times, exact_times
 
 
 if __name__ == "__main__":
@@ -193,10 +217,10 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mode", choices=["ga", "benchmark", "timebudget", "roadnetwork"], 
                         default="ga", help="Mode to run")
     parser.add_argument("-s", "--size", type=int, default=200, help="Graph size")
-    parser.add_argument("-p", "--population", type=int, default=50, help="Population size")
-    parser.add_argument("-g", "--generations", type=int, default=1000, help="Number of generations")
-    parser.add_argument("-i", "--instances", type=int, default=50, help="Number of benchmark instances")
-    parser.add_argument("-f", "--file", type=str, default="MON.json", help="Road network file")
+    parser.add_argument("-p", "--population", type=int, default=20, help="Population size")
+    parser.add_argument("-g", "--generations", type=int, default=500, help="Number of generations")
+    parser.add_argument("-i", "--instances", type=int, default=3, help="Number of benchmark instances")
+    parser.add_argument("-f", "--file", type=str, default="LEV.json", help="Road network file")
     parser.add_argument("--seed", type=int, default=66, help="Random seed for reproducibility")
     
     args = parser.parse_args()
@@ -209,4 +233,4 @@ if __name__ == "__main__":
     elif args.mode == "timebudget":
         time_budget_comparison(args.instances, args.size, args.seed, args.population)
     elif args.mode == "roadnetwork":
-        road_network_experiment(args.file, args.seed)
+        road_network_experiment(args.file, args.instances, args.seed, args.population, args.generations)

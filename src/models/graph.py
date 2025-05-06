@@ -16,6 +16,10 @@ class TransportationGraph:
             self.G[u][v]['weight'] = random.uniform(1, 10)
             self.G[u][v]['length'] = self.G[u][v]['weight']  # For compatibility
     
+    def get_node_count(self):
+        """Get the number of nodes in the graph"""
+        return self.G.number_of_nodes()
+    
     def get_path_distance(self, start, end):
         """Calculate shortest path distance between two nodes"""
         if start == end:

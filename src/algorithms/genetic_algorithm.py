@@ -1,6 +1,7 @@
 import random
 import time
 import numpy as np
+import networkx as nx
 
 class GeneticAlgorithm:
     """Genetic algorithm implementation for the 2-Terminal Problem"""
@@ -29,24 +30,29 @@ class GeneticAlgorithm:
         bits = 0
         for _ in range(self.bit_count):
             bits = (bits << 1) | random.getrandbits(1)
+            
         return bits
     
     def byte_to_number(self, bit_data):
-        """Convert bit representation to node IDs"""
+        """Convert bit representation to actual node IDs in the graph."""
         numbers = []
         bits_per_var = self.bit_count // 2
         max_int = (1 << bits_per_var) - 1
-        
+
+        # Get the list of actual node IDs from the graph
+        node_ids = list(self.graph.G.nodes)
+        num_nodes = len(node_ids)
+
         for i in range(2):  # Two variables: meeting point and dropping point
             number = 0
             for _ in range(bits_per_var):
                 number = (number << 1) | (bit_data & 1)
                 bit_data >>= 1
-            node_id = number % self.graph.N
-            numbers.append(node_id)
-        
+            node_index = number % num_nodes  # Map to a valid index in the node list
+            numbers.append(node_ids[node_index])  # Get the actual node ID
+
         return numbers[::-1]
-    
+        
     def fitness(self, individual):
         """Calculate fitness of an individual with caching"""
         if individual in self.fitness_cache:
@@ -58,6 +64,8 @@ class GeneticAlgorithm:
         agent1_start, agent2_start, agent1_dest, agent2_dest = self.terminals
         points = self.byte_to_number(individual)
         meeting_point, dropping_point = points
+        
+        #print("Meeting point:", meeting_point, "Dropping point:", dropping_point)
         
         if meeting_point == dropping_point:
             self.fitness_cache[individual] = float('-inf')
@@ -171,6 +179,16 @@ class GeneticAlgorithm:
                     print(f"Step: {i} Fitness: {top_fit:.4f}")
                     print(f"Meeting point: {points[0]}, Dropping point: {points[1]}")
         
+        # Make sure we have at least one solution
+        if best_solution is None and population:
+            best_solution = population[0]
+            best_fitness = self.fitness(best_solution)
+        
+        # Handle case where no solution was found (should be extremely rare)
+        if best_solution is None:
+            best_solution = self.generate_individual()
+            best_fitness = self.fitness(best_solution)
+        
         final_solution = self.byte_to_number(best_solution)
         if verbose:
             print("Final Solution:")
@@ -266,4 +284,84 @@ class GeneticAlgorithm:
             'population_history': population_history,
             'fitness_history': fitness_history,
             'iterations': iterations
+        }
+        
+    def run_on_real_network(self, steps=500, verbose=False):
+        """
+        Run the genetic algorithm on a real network using the graph data already loaded in self.graph.
+
+        Args:
+            steps (int): Number of steps to run the algorithm.
+            verbose (bool): Whether to print detailed output.
+        """
+        if not self.terminals:
+            raise ValueError("Terminal nodes not set")
+
+        # Ensure the graph has the required node data
+        if not hasattr(self.graph, 'G') or not isinstance(self.graph.G, nx.Graph):
+            raise ValueError("Graph does not contain valid node data")
+
+        population = self.populate()
+        population_history = []
+        fitness_history = []
+        best_fitness = float('-inf')
+        best_solution = None
+
+        evaluated_solutions = set()  # Track unique solutions evaluated
+
+        for i in range(steps):
+            population_history.append(population[:])
+
+            # Track unique solutions
+            for ind in population:
+                evaluated_solutions.add(ind)
+
+            current_fitness = [self.fitness(ind) for ind in population]
+            fitness_history.append(current_fitness)
+
+            # Generate new unique individual
+            new_individual = self.evolve(population)
+            while new_individual in evaluated_solutions:
+                new_individual = self.evolve(population)
+
+            population.append(new_individual)
+            population = sorted(population, key=self.fitness, reverse=True)[:self.pop_size]
+
+            top_fit = self.fitness(population[0])
+            if top_fit > best_fitness:
+                best_fitness = top_fit
+                best_solution = population[0]
+                if verbose:
+                    points = self.byte_to_number(population[0])
+                    meeting_point = self.graph.G.nodes.get(points[0], {"x": "Unknown", "y": "Unknown"})
+                    dropping_point = self.graph.G.nodes.get(points[1], {"x": "Unknown", "y": "Unknown"})
+                    print(f"Step: {i} Fitness: {top_fit:.4f}")
+                    print(f"Meeting point: ({meeting_point['x']}, {meeting_point['y']}), "
+                        f"Dropping point: ({dropping_point['x']}, {dropping_point['y']})")
+
+        # Make sure we have at least one solution
+        if best_solution is None and population:
+            best_solution = population[0]
+            best_fitness = self.fitness(best_solution)
+
+        # Handle case where no solution was found (should be extremely rare)
+        if best_solution is None:
+            best_solution = self.generate_individual()
+            best_fitness = self.fitness(best_solution)
+
+        final_solution = self.byte_to_number(best_solution)
+        if verbose:
+            meeting_point = self.graph.G.nodes.get(final_solution[0], {"x": "Unknown", "y": "Unknown"})
+            dropping_point = self.graph.G.nodes.get(final_solution[1], {"x": "Unknown", "y": "Unknown"})
+            print("Final Solution:")
+            print(f"Meeting point: ({meeting_point['x']}, {meeting_point['y']})")
+            print(f"Dropping point: ({dropping_point['x']}, {dropping_point['y']})")
+            print(f"Final fitness: {best_fitness:.4f} \n\n")
+
+        return {
+            'solution': final_solution,
+            'fitness': best_fitness,
+            'total_distance': -best_fitness,
+            'population_history': population_history,
+            'fitness_history': fitness_history
         }
