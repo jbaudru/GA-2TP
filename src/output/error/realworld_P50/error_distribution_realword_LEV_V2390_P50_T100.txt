@@ -1,0 +1,22 @@
+Error Distribution Results
+Graph Size: 2390
+Number of Instances: 10
+Generation: 100
+
+Error Statistics:
+Mean Error: 25.5000
+Std Error: 5.7836
+Mean Relative Error: 49.76%
+Max Relative Error: 85.29%
+
+Instance  GA             Exact          Error          Relative Error %
+0         88.00          51.00          37.00          72.55          
+1         93.00          74.00          19.00          25.68          
+2         104.00         85.00          19.00          22.35          
+3         84.00          62.00          22.00          35.48          
+4         77.00          51.00          26.00          50.98          
+5         100.00         74.00          26.00          35.14          
+6         63.00          35.00          28.00          80.00          
+7         63.00          34.00          29.00          85.29          
+8         59.00          41.00          18.00          43.90          
+9         98.00          67.00          31.00          46.27          

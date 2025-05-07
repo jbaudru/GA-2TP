@@ -286,7 +286,7 @@ class GeneticAlgorithm:
             'iterations': iterations
         }
         
-    def run_on_real_network(self, steps=500, verbose=False):
+    def run_on_real_network(self, steps=500, verbose=False, budget=False, time_budget=None):
         """
         Run the genetic algorithm on a real network using the graph data already loaded in self.graph.
 
@@ -309,35 +309,84 @@ class GeneticAlgorithm:
 
         evaluated_solutions = set()  # Track unique solutions evaluated
 
-        for i in range(steps):
-            population_history.append(population[:])
+        if not budget:
+            # Run for a fixed number of steps
+            for i in range(steps):
+                population_history.append(population[:])
 
-            # Track unique solutions
-            for ind in population:
-                evaluated_solutions.add(ind)
+                # Track unique solutions
+                for ind in population:
+                    evaluated_solutions.add(ind)
 
-            current_fitness = [self.fitness(ind) for ind in population]
-            fitness_history.append(current_fitness)
+                current_fitness = [self.fitness(ind) for ind in population]
+                fitness_history.append(current_fitness)
 
-            # Generate new unique individual
-            new_individual = self.evolve(population)
-            while new_individual in evaluated_solutions:
+                # Generate new unique individual
                 new_individual = self.evolve(population)
+                while new_individual in evaluated_solutions:
+                    new_individual = self.evolve(population)
 
-            population.append(new_individual)
-            population = sorted(population, key=self.fitness, reverse=True)[:self.pop_size]
+                population.append(new_individual)
+                population = sorted(population, key=self.fitness, reverse=True)[:self.pop_size]
 
-            top_fit = self.fitness(population[0])
-            if top_fit > best_fitness:
-                best_fitness = top_fit
-                best_solution = population[0]
-                if verbose:
-                    points = self.byte_to_number(population[0])
-                    meeting_point = self.graph.G.nodes.get(points[0], {"x": "Unknown", "y": "Unknown"})
-                    dropping_point = self.graph.G.nodes.get(points[1], {"x": "Unknown", "y": "Unknown"})
-                    print(f"Step: {i} Fitness: {top_fit:.4f}")
-                    print(f"Meeting point: ({meeting_point['x']}, {meeting_point['y']}), "
-                        f"Dropping point: ({dropping_point['x']}, {dropping_point['y']})")
+                top_fit = self.fitness(population[0])
+                if top_fit > best_fitness:
+                    best_fitness = top_fit
+                    best_solution = population[0]
+                    if verbose:
+                        points = self.byte_to_number(population[0])
+                        meeting_point = self.graph.G.nodes.get(points[0], {"x": "Unknown", "y": "Unknown"})
+                        dropping_point = self.graph.G.nodes.get(points[1], {"x": "Unknown", "y": "Unknown"})
+                        print(f"Step: {i} Fitness: {top_fit:.4f}")
+                        print(f"Meeting point: ({meeting_point['x']}, {meeting_point['y']}), "
+                            f"Dropping point: ({dropping_point['x']}, {dropping_point['y']})")
+
+        else:
+            if verbose:
+                print("[DEBUG] Running with time budget...")
+            # Run with a time budget
+            start_time = time.time()
+            iterations = 0
+
+            # Ensure we run at least one iteration
+            end_time = time.time()
+            while end_time - start_time < time_budget:
+                iterations += 1
+                population_history.append(population[:])
+
+                # Track unique solutions
+                for ind in population:
+                    evaluated_solutions.add(ind)
+
+                current_fitness = [self.fitness(ind) for ind in population]
+                fitness_history.append(current_fitness)
+
+                # Generate new unique individual
+                new_individual = self.evolve(population)
+                attempt_count = 0
+                max_attempts = 100
+                while new_individual in evaluated_solutions and time.time() - start_time < time_budget:
+                    new_individual = self.evolve(population)
+                    attempt_count += 1
+                    if attempt_count >= max_attempts:
+                        break
+                
+                population.append(new_individual)
+                population = sorted(population, key=self.fitness, reverse=True)[:self.pop_size]
+                
+                top_fit = self.fitness(population[0])
+                if top_fit > best_fitness:
+                    best_fitness = top_fit
+                    best_solution = population[0]
+                    if verbose:
+                        points = self.byte_to_number(population[0])
+                        meeting_point = self.graph.G.nodes.get(points[0], {"x": "Unknown", "y": "Unknown"})
+                        dropping_point = self.graph.G.nodes.get(points[1], {"x": "Unknown", "y": "Unknown"})
+                        print(f"Iteration: {iterations} Fitness: {top_fit:.4f}")
+                        print(f"Meeting point: ({meeting_point['x']}, {meeting_point['y']}), "
+                            f"Dropping point: ({dropping_point['x']}, {dropping_point['y']})")
+                
+                end_time = time.time()
 
         # Make sure we have at least one solution
         if best_solution is None and population:

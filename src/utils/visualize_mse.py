@@ -45,7 +45,9 @@ def plot_mre_distribution(data, parameter):
     data = sorted(data, key=lambda x: float(x["parameter"].split(":")[0].strip()))
     
     # Create color palette
-    palette = sns.color_palette("viridis", len(data))
+    #palette = sns.color_palette("viridis", len(data)) # for graph size
+    #palette = sns.color_palette("Set1", len(data)) # for generation size
+    palette = sns.color_palette("tab10", len(data)) # for population size
     
     # Setup consistent x-grid
     x_grid = np.linspace(0, 100, 500)  # Focus on 0 to 0.5 range
@@ -93,15 +95,15 @@ def plot_mre_distribution(data, parameter):
     plt.tight_layout()
     
     # Save and show
-    plt.savefig(f"../output/city{parameter}_T_20_P20.png", dpi=300, bbox_inches='tight')
+    plt.savefig(f"../output/city{parameter}_budget.png", dpi=300, bbox_inches='tight')
     plt.show()
 
 if __name__ == "__main__":
     # Directory containing the error distribution files
-    directory = "../output/error/realworld_P20_T_test/"
+    directory = "../output/error/realworld_budget/"
     
     # User-specified parameter for comparison
-    parameter = "Graph Size"  # Change to "Population Size" if needed
+    parameter = "Population Size"  # Change to "Population Size" if needed
     
     # Parse files and plot
     data = parse_error_distribution_files(directory, parameter)
