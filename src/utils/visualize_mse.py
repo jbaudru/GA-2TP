@@ -46,8 +46,11 @@ def plot_mre_distribution(data, parameter):
     
     # Create color palette
     #palette = sns.color_palette("viridis", len(data)) # for graph size
-    #palette = sns.color_palette("Set1", len(data)) # for generation size
-    palette = sns.color_palette("tab10", len(data)) # for population size
+    palette = sns.color_palette("Set1", len(data)) # for generation size
+    #palette = sns.color_palette("tab10", len(data)) # for population size
+    
+    # Define line styles for different lines
+    line_styles = ['-', '--', '-.', ':', (0, (3, 1, 1, 1)), (0, (5, 1)), (0, (3, 5, 1, 5)), (0, (1, 1))]
     
     # Setup consistent x-grid
     x_grid = np.linspace(0, 100, 500)  # Focus on 0 to 0.5 range
@@ -69,8 +72,9 @@ def plot_mre_distribution(data, parameter):
             if np.max(density) > 0:
                 density = density / np.max(density)
                 
-                # Plot smooth curve with filled area
+                # Plot smooth curve with filled area and different line styles
                 plt.plot(x_grid, density, color=palette[idx], linewidth=2, 
+                         linestyle=line_styles[idx % len(line_styles)],
                          label=f"{parameter}: {param_value}")
                 plt.fill_between(x_grid, density, alpha=0.15, color=palette[idx])
         except:
@@ -95,15 +99,19 @@ def plot_mre_distribution(data, parameter):
     plt.tight_layout()
     
     # Save and show
-    plt.savefig(f"../output/city{parameter}_budget.png", dpi=300, bbox_inches='tight')
+    plt.savefig(f"../output/NEW_city{parameter}_P50.png", dpi=300, bbox_inches='tight')
     plt.show()
 
 if __name__ == "__main__":
     # Directory containing the error distribution files
-    directory = "../output/error/realworld_budget/"
+    #directory = "../output/error/realworld_budget/"
+    
+    directory = "../output/error/realworld_P50/"
     
     # User-specified parameter for comparison
-    parameter = "Population Size"  # Change to "Population Size" if needed
+    #parameter = "Graph Size"  # Change to "Population Size" if needed
+    #parameter = "Population Size"
+    parameter = "Generation"
     
     # Parse files and plot
     data = parse_error_distribution_files(directory, parameter)
