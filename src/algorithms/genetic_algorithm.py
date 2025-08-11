@@ -154,10 +154,10 @@ class GeneticAlgorithm:
             
             # Weighted combination of objectives
             # These weights can be tuned based on problem priorities
-            w1 = 3.0  # Sharing benefit weight
+            w1 = 4.0  # Sharing benefit weight
             w2 = 1.5  # Cost savings weight  
-            w3 = 2.0  # Sharing ratio weight
-            w4 = 1.0  # Detour penalty weight
+            w3 = 1.0  # Sharing ratio weight
+            w4 = 2.0  # Detour penalty weight
             
             fitness = (w1 * sharing_benefit + 
                       w2 * cost_savings + 
