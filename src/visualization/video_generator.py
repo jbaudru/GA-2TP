@@ -35,7 +35,7 @@ class VideoGenerator:
         """Create animation showing the 2TP problem definition"""
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
         fig.patch.set_facecolor(self.colors['background'])
-        fig.suptitle('The 2-Terminal Problem (2TP)', fontsize=20, color=self.colors['text'])
+        fig.suptitle('The 2-Transfer Problem (2TP)', fontsize=20, color=self.colors['text'])
         
         # Create a simple graph for demonstration
         graph = TransportationGraph(num_nodes)
@@ -129,8 +129,21 @@ class VideoGenerator:
                 nx.draw_networkx_edges(G, pos, ax=ax1, edge_color=self.colors['text'], 
                                      alpha=0.3, width=1)
             
-            # Highlight terminals progressively
+            
+            # Show example meeting and dropping points at same time as "Solution: Find..." text
             if frame > 60:
+                # Meeting point in yellow
+                nx.draw_networkx_nodes(G, pos, nodelist=[example_meeting], ax=ax1,
+                                     node_color=self.colors['meeting'], 
+                                     node_size=500, alpha=0.9)
+                # Dropping point in orange
+                nx.draw_networkx_nodes(G, pos, nodelist=[example_dropping], ax=ax1,
+                                     node_color=self.colors['dropping'], 
+                                     node_size=500, alpha=0.9)
+            
+            
+            # Highlight terminals progressively
+            if frame > 90:
                 # Agent 1 start and destination
                 nx.draw_networkx_nodes(G, pos, nodelist=[agent1_start], ax=ax1,
                                      node_color=self.colors['primary'], 
@@ -148,19 +161,8 @@ class VideoGenerator:
                                      node_color=self.colors['secondary'], 
                                      node_size=400, alpha=0.7, label='Agent 2 Dest')
             
-            # Show example meeting and dropping points
-            if frame > 120:
-                # Meeting point in yellow
-                nx.draw_networkx_nodes(G, pos, nodelist=[example_meeting], ax=ax1,
-                                     node_color=self.colors['meeting'], 
-                                     node_size=500, alpha=0.9)
-                # Dropping point in orange
-                nx.draw_networkx_nodes(G, pos, nodelist=[example_dropping], ax=ax1,
-                                     node_color=self.colors['dropping'], 
-                                     node_size=500, alpha=0.9)
-            
             # Add labels to terminals
-            if frame > 150:
+            if frame > 120:
                 ax1.text(pos[agent1_start][0], pos[agent1_start][1]+0.1, 'A1 Start', 
                         ha='center', color=self.colors['primary'], fontweight='bold')
                 ax1.text(pos[agent1_dest][0], pos[agent1_dest][1]+0.1, 'A1 End', 
@@ -174,8 +176,8 @@ class VideoGenerator:
                 ax1.text(pos[example_dropping][0], pos[example_dropping][1]+0.1, 'Dropping (D)', 
                         ha='center', color=self.colors['dropping'], fontweight='bold')
             
-            # Draw example solution paths with correct colors
-            if frame > 180:
+            # Draw example solution paths at same time as "Minimize total..." text
+            if frame > 90:
                 try:
                     # Paths to meeting point
                     path1_to_m = nx.shortest_path(G, agent1_start, example_meeting, weight='weight')
@@ -205,7 +207,7 @@ class VideoGenerator:
             ax1.axis('off')
             
             # Right panel: Problem explanation
-            ax2.text(0.5, 0.9, '2-Terminal Problem', 
+            ax2.text(0.5, 0.9, '2-Transfer Problem', 
                     ha='center', va='center', fontsize=18, color=self.colors['text'], fontweight='bold')
             
             if frame > 30:
@@ -556,7 +558,7 @@ class VideoGenerator:
                         ax.legend(loc='upper right')
                 
                 ax.set_xlabel('Generation', color=self.colors['text'])
-                ax.set_ylabel('Distance', color=self.colors['text'])
+                ax.set_ylabel('Fitness', color=self.colors['text'])
                 ax.tick_params(colors=self.colors['text'])
                 ax.grid(True, alpha=0.3)
         
@@ -674,12 +676,12 @@ class VideoGenerator:
                         ax_fitness_dist.hist(valid_fitness, bins=10, color=self.colors['accent'], alpha=0.7)
                         ax_fitness_dist.axvline(gen_data['best_fitness'], color=self.colors['primary'], 
                                                linestyle='--', linewidth=2, label='Best')
-                ax_fitness_dist.set_xlabel('Distance', color=self.colors['text'])
+                ax_fitness_dist.set_xlabel('Fitness', color=self.colors['text'])
                 ax_fitness_dist.set_ylabel('Count', color=self.colors['text'])
                 ax_fitness_dist.tick_params(colors=self.colors['text'])
                 
                 # Panel 3: Fitness evolution over time
-                ax_fitness_evolution.set_title('Distance Evolution', fontsize=12, color=self.colors['text'])
+                ax_fitness_evolution.set_title('Fitness Evolution', fontsize=12, color=self.colors['text'])
                 if frame > 0:
                     # Show fitness evolution up to current frame using sampled data
                     generations_shown = [sampled_data[i]['generation'] for i in range(frame + 1)]
@@ -688,13 +690,13 @@ class VideoGenerator:
                     
                     # Plot best fitness
                     ax_fitness_evolution.plot(generations_shown, best_fitness_history, 
-                                            color=self.colors['primary'], linewidth=2, label='Best Distance')
+                                            color=self.colors['primary'], linewidth=2, label='Best Fitness')
                     # Plot average fitness with lower alpha
                     ax_fitness_evolution.plot(generations_shown, avg_fitness_history, 
-                                            color=self.colors['secondary'], linewidth=2, alpha=0.6, label='Avg Distance')
+                                            color=self.colors['secondary'], linewidth=2, alpha=0.6, label='Avg Fitness')
                     ax_fitness_evolution.legend(loc='upper right')
                 ax_fitness_evolution.set_xlabel('Generation', color=self.colors['text'])
-                ax_fitness_evolution.set_ylabel('Distance', color=self.colors['text'])
+                ax_fitness_evolution.set_ylabel('Fitness', color=self.colors['text'])
                 ax_fitness_evolution.tick_params(colors=self.colors['text'])
                 ax_fitness_evolution.grid(True, alpha=0.3)
                 
@@ -705,8 +707,8 @@ class VideoGenerator:
                 best_points = ga.byte_to_number(gen_data['best_solution'])
                 meeting_point, dropping_point = best_points
                 
-                info_text = f"Best Distance: {gen_data['best_fitness']:.2f}\n"
-                info_text += f"Avg Distance: {gen_data['avg_fitness']:.2f}\n"
+                info_text = f"Best Fitness: {gen_data['best_fitness']:.2f}\n"
+                info_text += f"Avg Fitness: {gen_data['avg_fitness']:.2f}\n"
                 info_text += f"Meeting Point: {meeting_point}\n"
                 info_text += f"Dropping Point: {dropping_point}\n"
                 info_text += f"Population Size: {gen_data['population_size']}"
@@ -729,8 +731,9 @@ class VideoGenerator:
         print(f"✅ All {num_videos} GA evolution videos completed!")
 
 def main():
-    """Generate all video components"""
+    """Generate all video components (excluding real road network which has its own script)"""
     print("Starting video generation for GA-2TP project...")
+    print("Note: For real road network video, run 'python real_road_network_video.py' separately")
     generator = VideoGenerator()
     
     try:
@@ -747,6 +750,10 @@ def main():
         print("Generated files:")
         for file in generator.output_folder.glob("*.mp4"):
             print(f"  - {file.name}")
+        
+        print("\n💡 To generate the real Brussels road network video, run:")
+        print("   python real_road_network_video.py")
+        print("   (This will take significantly longer due to the large network size)")
             
     except Exception as e:
         print(f"❌ Error during video generation: {e}")

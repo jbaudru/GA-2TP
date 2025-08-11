@@ -54,18 +54,27 @@ class GeneticAlgorithm:
         return numbers[::-1]
         
     def fitness(self, individual):
-        """Calculate fitness of an individual with caching"""
+        """Calculate fitness of an individual with caching - now using advanced sharing method"""
+        # Check cache first
         if individual in self.fitness_cache:
             return self.fitness_cache[individual]
-            
+        
+        # Calculate using the new advanced sharing fitness
+        result = self.fitness_advanced_sharing(individual)
+        
+        # Cache the result
+        self.fitness_cache[individual] = result
+        return result
+        
+        # OLD FITNESS METHOD (kept for reference/rollback):
+        """
+        # Original simple distance minimization method:
         if not self.terminals:
             raise ValueError("Terminal nodes not set")
             
         agent1_start, agent2_start, agent1_dest, agent2_dest = self.terminals
         points = self.byte_to_number(individual)
         meeting_point, dropping_point = points
-        
-        #print("Meeting point:", meeting_point, "Dropping point:", dropping_point)
         
         if meeting_point == dropping_point:
             self.fitness_cache[individual] = float('-inf')
@@ -89,6 +98,76 @@ class GeneticAlgorithm:
         result = -total  # Negative since GA maximizes fitness
         self.fitness_cache[individual] = result
         return result
+        """
+        
+    
+    def fitness_advanced_sharing(self, individual):
+        """
+        Advanced fitness combining multiple objectives with smart weighting
+        Maximizes shared path while minimizing detours and total cost
+        """
+        if not self.terminals:
+            raise ValueError("Terminal nodes not set")
+            
+        agent1_start, agent2_start, agent1_dest, agent2_dest = self.terminals
+        points = self.byte_to_number(individual)
+        meeting_point, dropping_point = points
+        
+        if meeting_point == dropping_point:
+            return float('-inf')  # Penalize same points
+        
+        try:
+            # Calculate path distances for the shared journey
+            d_a1_meet = self.graph.get_path_distance(agent1_start, meeting_point)
+            d_a2_meet = self.graph.get_path_distance(agent2_start, meeting_point)
+            d_shared = self.graph.get_path_distance(meeting_point, dropping_point)
+            d_drop_a1 = self.graph.get_path_distance(dropping_point, agent1_dest)
+            d_drop_a2 = self.graph.get_path_distance(dropping_point, agent2_dest)
+            
+            # Calculate reference distances (if traveling separately)
+            d_a1_direct = self.graph.get_path_distance(agent1_start, agent1_dest)
+            d_a2_direct = self.graph.get_path_distance(agent2_start, agent2_dest)
+            
+            # Total costs
+            total_shared_cost = d_a1_meet + d_a2_meet + d_shared + d_drop_a1 + d_drop_a2
+            total_separate_cost = d_a1_direct + d_a2_direct
+            
+            # Objective 1: Shared distance benefit (longer shared path is better)
+            sharing_benefit = d_shared
+            
+            # Objective 2: Cost efficiency (savings vs separate travel)
+            cost_savings = total_separate_cost - total_shared_cost
+            
+            # Objective 3: Sharing ratio (proportion of total journey that's shared)
+            sharing_ratio = d_shared / (total_shared_cost + 1e-6)  # Avoid division by zero
+            
+            # Objective 4: Detour penalty (minimize extra distance for each agent)
+            # Agent 1's journey: start -> meeting -> dropping -> dest vs direct
+            agent1_shared_journey = d_a1_meet + d_shared + d_drop_a1
+            detour_a1 = max(0, agent1_shared_journey - d_a1_direct)
+            
+            # Agent 2's journey: start -> meeting -> dropping -> dest vs direct
+            agent2_shared_journey = d_a2_meet + d_shared + d_drop_a2
+            detour_a2 = max(0, agent2_shared_journey - d_a2_direct)
+            
+            total_detour_penalty = detour_a1 + detour_a2
+            
+            # Weighted combination of objectives
+            # These weights can be tuned based on problem priorities
+            w1 = 3.0  # Sharing benefit weight
+            w2 = 1.5  # Cost savings weight  
+            w3 = 2.0  # Sharing ratio weight
+            w4 = 1.0  # Detour penalty weight
+            
+            fitness = (w1 * sharing_benefit + 
+                      w2 * cost_savings + 
+                      w3 * sharing_ratio - 
+                      w4 * total_detour_penalty)
+            
+            return fitness
+            
+        except:
+            return float('-inf')  # Invalid solution
     
     def populate(self):
         """Generate initial population"""

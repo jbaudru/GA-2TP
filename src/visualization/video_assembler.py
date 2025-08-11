@@ -90,7 +90,7 @@ class VideoAssembler:
             # Add text if possible
             try:
                 title_text = mp.TextClip(
-                    "Genetic Algorithm for 2-Terminal Problem\nEducational Demonstration",
+                    "Genetic Algorithm for 2-Transfer Problem\nEducational Demonstration",
                     fontsize=50,
                     color='white',
                     font='Arial-Bold'
