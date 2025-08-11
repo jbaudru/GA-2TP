@@ -48,18 +48,11 @@ class TransportationGraph:
         # Use provided RNG or fall back to standard random module
         rand = rng if rng is not None else random
         
-        agent1_start = rand.choice(nodes)
+        # Ensure all 4 terminals are different
+        if len(nodes) < 4:
+            raise ValueError("Graph must have at least 4 nodes for 2TP problem")
         
-        agent2_start = rand.choice(nodes)
-        while agent2_start == agent1_start:
-            agent2_start = rand.choice(nodes)
-            
-        agent1_dest = rand.choice(nodes)
-        while agent1_dest == agent1_start:
-            agent1_dest = rand.choice(nodes)
-            
-        agent2_dest = rand.choice(nodes)
-        while agent2_dest in [agent2_start, agent1_dest]:
-            agent2_dest = rand.choice(nodes)
+        selected_nodes = rand.sample(nodes, 4)  # Select 4 different nodes
+        agent1_start, agent2_start, agent1_dest, agent2_dest = selected_nodes
             
         return agent1_start, agent2_start, agent1_dest, agent2_dest
